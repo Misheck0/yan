@@ -4,6 +4,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "start": "node index.js",
+    "postinstall": "puppeteer install && npx puppeteer browsers install chrome",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -16,4 +18,3 @@
     "puppeteer": "^24.6.1"
   }
 }
-
