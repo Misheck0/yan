@@ -1,20 +1,11 @@
 import puppeteer from 'puppeteer';
-import fs from 'fs';
 
 async function trackParcel(orderID) {
-    const herokuChromePath = '/app/.cache/puppeteer/chrome/linux-135.0.7049.84/chrome-linux64/chrome';
-
     const browser = await puppeteer.launch({
         headless: true,
-        executablePath: fs.existsSync(herokuChromePath)
-            ? herokuChromePath
-            : puppeteer.executablePath(),
         args: [
             '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-accelerated-2d-canvas',
-            '--disable-gpu'
+            '--disable-setuid-sandbox'
         ]
     });
 
@@ -23,7 +14,6 @@ async function trackParcel(orderID) {
     try {
         const page = await browser.newPage();
 
-        // Capture network response
         page.on('response', async (response) => {
             const url = response.url();
             const headers = response.headers();
@@ -41,7 +31,7 @@ async function trackParcel(orderID) {
                         }));
                     }
                 } catch (error) {
-                    console.error('Error parsing response JSON:', error);
+                    console.error('Error parsing JSON:', error);
                 }
             }
         });
@@ -53,29 +43,23 @@ async function trackParcel(orderID) {
 
         await new Promise(resolve => setTimeout(resolve, 5000));
 
-        if (trackingData.length > 0) {
-            process.stdout.write(JSON.stringify({
-                status: 'success',
-                tracking_info: trackingData
-            }));
-        } else {
-            process.stdout.write(JSON.stringify({
-                status: 'error',
-                message: 'Failed to retrieve tracking data.'
-            }));
-        }
+        process.stdout.write(JSON.stringify(
+            trackingData.length > 0
+                ? { status: 'success', tracking_info: trackingData }
+                : { status: 'error', message: 'Failed to retrieve tracking data.' }
+        ));
+
     } catch (error) {
         console.error('Error:', error);
         process.stdout.write(JSON.stringify({
             status: 'error',
-            message: 'An error occurred while processing the tracking request.'
+            message: 'An error occurred during tracking.'
         }));
     } finally {
         await browser.close();
     }
 }
 
-// If run directly
 if (process.argv[1].endsWith('track.js')) {
     const orderID = process.argv[2];
     if (!orderID) {
@@ -84,4 +68,3 @@ if (process.argv[1].endsWith('track.js')) {
     }
     trackParcel(orderID);
 }
-// If imported as a module
