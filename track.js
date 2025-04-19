@@ -3,6 +3,7 @@ import puppeteer from 'puppeteer';
 async function trackParcel(orderID) {
     const browser = await puppeteer.launch({
         headless: true,
+        executablePath: puppeteer.executablePath(), // 👈 Add this line for Heroku
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
