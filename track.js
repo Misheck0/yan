@@ -1,9 +1,14 @@
 import puppeteer from 'puppeteer';
+import fs from 'fs';
 
 async function trackParcel(orderID) {
+    const herokuChromePath = '/app/.cache/puppeteer/chrome/linux-135.0.7049.84/chrome-linux64/chrome';
+
     const browser = await puppeteer.launch({
         headless: true,
-        executablePath: puppeteer.executablePath(), // 👈 Add this line for Heroku
+        executablePath: fs.existsSync(herokuChromePath)
+            ? herokuChromePath
+            : puppeteer.executablePath(),
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
@@ -41,16 +46,13 @@ async function trackParcel(orderID) {
             }
         });
 
-        // Go to the tracking page
         await page.goto(`https://www.fycargo.com/index/search?no=${orderID}`, {
             waitUntil: 'domcontentloaded',
             timeout: 60000
         });
 
-        // Wait for any async tracking data to load
         await new Promise(resolve => setTimeout(resolve, 5000));
 
-        // Send result to stdout for Laravel to read
         if (trackingData.length > 0) {
             process.stdout.write(JSON.stringify({
                 status: 'success',
@@ -82,3 +84,4 @@ if (process.argv[1].endsWith('track.js')) {
     }
     trackParcel(orderID);
 }
+// If imported as a module
